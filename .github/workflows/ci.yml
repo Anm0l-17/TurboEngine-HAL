@@ -7,6 +7,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -e ".[dev,api]"
+      - run: pip install -e ".[dev,api,dashboard]"
       - run: ruff check .
       - run: pytest --cov=src --cov-fail-under=70
