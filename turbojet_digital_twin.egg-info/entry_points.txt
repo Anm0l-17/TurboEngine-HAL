@@ -1,0 +1,2 @@
+[console_scripts]
+turbojet-twin = pipeline:main

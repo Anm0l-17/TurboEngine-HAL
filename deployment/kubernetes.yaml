@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: turbojet-twin}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: turbojet-twin}}
+  template:
+    metadata: {labels: {app: turbojet-twin}}
+    spec:
+      containers:
+        - name: api
+          image: turbojet-digital-twin:1.0.0
+          ports: [{containerPort: 8000}]
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          readinessProbe: {httpGet: {path: /health, port: 8000}, initialDelaySeconds: 5}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: turbojet-twin}
+spec:
+  selector: {app: turbojet-twin}
+  ports: [{port: 80, targetPort: 8000}]

@@ -1,0 +1,4 @@
+model:
+  kind: random_forest
+  n_estimators: 200
+  max_depth: 16

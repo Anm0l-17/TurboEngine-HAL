@@ -1,0 +1,13 @@
+seed: 42
+data:
+  path: data/turbojet.csv
+  test_size: 0.2
+model:
+  kind: extra_trees
+  n_estimators: 200
+physics:
+  max_temperature_k: 1900.0
+  compressor_pressure_ratio: 10.0
+runtime:
+  drift_threshold: 0.12
+  failure_health_threshold: 0.3

@@ -1,0 +1,13 @@
+[run]
+source = src
+omit =
+    src/viz/dashboard.py
+    src/deployment/export.py
+
+[report]
+show_missing = true
+fail_under = 90
+exclude_lines =
+    pragma: no cover
+    raise RuntimeError
+    if TYPE_CHECKING:
