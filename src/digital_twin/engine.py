@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from src.dataset.loader import FEATURES
 from src.estimation.state_estimator import StateEstimator
+from src.faults.injection import FaultInjector
 from src.health.overall import overall_health
 from src.maintenance.recommendation import recommend
 from src.physics.cycle_model import BraytonCycle, CycleInput
@@ -25,6 +26,7 @@ class DigitalTwin:
         self.estimator = StateEstimator()
         self.model: SurrogateModel | None = None
         self.history: list[dict[str, Any]] = []
+        self.fault_injector: FaultInjector = FaultInjector()
 
     def initialize(self) -> "DigitalTwin":
         """Reset temporal state while retaining a loaded model."""
@@ -43,24 +45,29 @@ class DigitalTwin:
         """Predict health and performance using surrogate or physics fallback."""
         if precomputed is not None:
             return precomputed
+        cycle_index = observation.get("Cycle")
+        observation = self.fault_injector.apply_to_observation(observation, cycle_index)
         if self.model is not None:
             frame = pd.DataFrame([{name: observation[name] for name in FEATURES}])
             return {key: float(value) for key, value in self.model.predict(frame).iloc[0].items()}
-        cycle = self.physics.evaluate(
-            CycleInput(
-                observation.get("Altitude", 0),
-                observation.get("Mach", 0),
-                observation["Tamb"],
-                observation["Pamb"],
-                observation["RPM"],
-                observation["FuelFlow"],
-            )
+        base_input = CycleInput(
+            observation.get("Altitude", 0),
+            observation.get("Mach", 0),
+            observation["Tamb"],
+            observation["Pamb"],
+            observation["RPM"],
+            observation["FuelFlow"],
         )
+        faulted_input = self.fault_injector.apply_to_cycle_input(base_input, cycle_index)
+        cycle = self.physics.evaluate(faulted_input)
+        compressor_health = faulted_input.compressor_health
+        combustor_health = faulted_input.combustor_health
+        turbine_health = faulted_input.turbine_health
         return {
-            "CompressorHealth": 1.0,
-            "CombustorHealth": 1.0,
-            "TurbineHealth": 1.0,
-            "OverallHealth": 1.0,
+            "CompressorHealth": compressor_health,
+            "CombustorHealth": combustor_health,
+            "TurbineHealth": turbine_health,
+            "OverallHealth": overall_health(compressor_health, combustor_health, turbine_health),
             "Thrust": cycle.thrust_n,
             "TSFC": cycle.tsfc_kg_n_s,
         }
