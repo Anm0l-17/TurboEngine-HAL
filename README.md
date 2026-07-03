@@ -79,6 +79,33 @@ flowchart TB
 
 ---
 
+## Dashboard Preview
+
+<div align="center">
+
+| Live Health Gauge | Feature Importance |
+|---|---|
+| ![Engine Health Gauge](docs/assets/screenshots/engine_health_gauge.png) | ![Feature Importance](docs/assets/screenshots/feature_importance_chart.png) |
+
+| Health Trajectories | Thrust / TSFC Trends |
+|---|---|
+| ![Health Trajectories](docs/assets/screenshots/health_trajectories_dashboard.png) | ![Thrust TSFC Trends](docs/assets/screenshots/thrust_tsfc_trends.png) |
+
+| RUL & Failure Probability | Maintenance Recommendation |
+|---|---|
+| ![RUL Failure Probability](docs/assets/screenshots/rul_failure_probability_trends.png) | ![Maintenance Recommendation](docs/assets/screenshots/maintenance_recommendation_panel.png) |
+
+</div>
+
+- **Overall Health Gauge** — real-time composite health score, thrust, RUL, and risk tier at a glance.
+- **Feature Importance** — surrogate model attribution across sensor inputs (`FuelFlow` and `RPM` dominate).
+- **Health Trajectories** — per-component (`Compressor`, `Combustor`, `Turbine`) and `OverallHealth` decay across cycles for the full fleet.
+- **Thrust / TSFC Trends** — thrust output and thrust-specific fuel consumption tracked per cycle.
+- **RUL & Failure Probability** — remaining-useful-life forecast vs. rising failure probability per engine.
+- **Maintenance Recommendation** — CBM engine's actionable output (e.g. *"Continue normal operation — Risk level: low"*).
+
+---
+
 ## Quick Start
 
 ```powershell
