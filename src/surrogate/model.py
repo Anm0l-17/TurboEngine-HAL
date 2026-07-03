@@ -6,10 +6,19 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
+from src.dataset.features import engineer_all_features
 
 
 class SurrogateModel:
-    """Column-aware wrapper around a fitted scikit-learn pipeline."""
+    """Column-aware wrapper around a fitted scikit-learn pipeline.
+
+    ``feature_names`` remains the raw sensor schema (what every caller —
+    ``DigitalTwin``, the trainer, the dashboard, the API — already passes
+    in). Internally, ``fit``/``predict`` expand each row with
+    ``engineer_all_features`` (ratios, deltas, and physics-residual health
+    signals) before handing it to the wrapped sklearn pipeline, so no
+    caller needs to change.
+    """
 
     def __init__(
         self, pipeline: Pipeline, feature_names: list[str], target_names: list[str]
@@ -18,14 +27,18 @@ class SurrogateModel:
         self.feature_names = feature_names
         self.target_names = target_names
 
+    def _prepare(self, frame: pd.DataFrame) -> pd.DataFrame:
+        """Expand raw sensor rows with engineered features for the pipeline."""
+        return engineer_all_features(frame[self.feature_names])
+
     def fit(self, frame: pd.DataFrame) -> "SurrogateModel":
         """Fit inputs to all configured targets."""
-        self.pipeline.fit(frame[self.feature_names], frame[self.target_names])
+        self.pipeline.fit(self._prepare(frame), frame[self.target_names])
         return self
 
     def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
         """Return named predictions."""
-        values = np.asarray(self.pipeline.predict(frame[self.feature_names]))
+        values = np.asarray(self.pipeline.predict(self._prepare(frame)))
         return pd.DataFrame(values, columns=self.target_names, index=frame.index)
 
     def save(self, path: str | Path) -> None:
