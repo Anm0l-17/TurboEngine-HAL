@@ -74,6 +74,16 @@ def main() -> None:
     train.add_argument("--data", required=True)
     train.add_argument("--output", default="models/best_model.joblib")
     train.add_argument("--kind", default="extra_trees")
+    train.add_argument(
+        "--strategy",
+        default="official",
+        choices=["official", "grouped"],
+        help=(
+            "official: per-engine cycle holdout, matches the distributed "
+            "train.csv/test.csv (default). grouped: whole-engine holdout, "
+            "a harder generalization stress test."
+        ),
+    )
     evaluate = commands.add_parser("evaluate")
     evaluate.add_argument("--data", required=True)
     evaluate.add_argument("--model", default="models/best_model.joblib")
@@ -86,7 +96,10 @@ def main() -> None:
     configure_logging()
     ensure_directories()
     if args.command == "train":
-        LOGGER.info("metrics=%s", json.dumps(train_from_csv(args.data, args.output, args.kind)))
+        LOGGER.info(
+            "metrics=%s",
+            json.dumps(train_from_csv(args.data, args.output, args.kind, strategy=args.strategy)),
+        )
     elif args.command == "evaluate":
         LOGGER.info("metrics=%s", json.dumps(evaluate_model(args.model, args.data)))
     elif args.command == "predict":
