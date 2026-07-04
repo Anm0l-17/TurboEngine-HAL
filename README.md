@@ -233,7 +233,7 @@ Pre-commit hooks (`.pre-commit-config.yaml`) run these automatically on every co
 ```yaml
 seed: 42
 data:
-  path: data/turbojet.csv
+  path: data/turbojet_complete_dataset.csv
   test_size: 0.2
 model:
   kind: extra_trees

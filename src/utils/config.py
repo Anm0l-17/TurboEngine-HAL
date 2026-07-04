@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 
 class DataConfig(BaseModel):
-    path: str = "data/turbojet.csv"
+    path: str = "data/turbojet_complete_dataset.csv"
     test_size: float = Field(0.2, gt=0, lt=1)
 
 

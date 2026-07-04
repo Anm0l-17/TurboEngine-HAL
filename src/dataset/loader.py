@@ -50,6 +50,7 @@ _COLUMN_ALIASES = {
 def load_dataset(path: str | Path, require_targets: bool = True) -> pd.DataFrame:
     """Read a CSV and enforce the official numeric schema."""
     frame = pd.read_csv(path)
+    tsfc_in_grams = "TSFC" not in frame.columns and "TSFC_g_N_s" in frame.columns
     frame = frame.rename(columns={k: v for k, v in _COLUMN_ALIASES.items() if k in frame.columns})
     required = FEATURES + (TARGETS if require_targets else [])
     missing = sorted(set(required) - set(frame.columns))
@@ -57,6 +58,8 @@ def load_dataset(path: str | Path, require_targets: bool = True) -> pd.DataFrame
         raise ValueError(f"Missing required columns: {', '.join(missing)}")
     frame = frame.copy()
     frame[required] = frame[required].apply(pd.to_numeric, errors="raise")
+    if tsfc_in_grams and "TSFC" in frame.columns:
+        frame["TSFC"] = frame["TSFC"] / 1000.0
     if frame[required].isna().any().any():
         raise ValueError("Dataset contains missing required values")
     return frame
