@@ -15,6 +15,8 @@ from src.training.evaluate import evaluate_model
 from src.training.hyperparameter_search import select_model
 from src.training.trainer import train_from_csv
 from src.utils.logging import configure_logging
+from src.validation.benchmark import run_validation_suite
+from src.performance.benchmark import run_benchmark_suite
 from src.utils.paths import ensure_directories
 
 LOGGER = logging.getLogger(__name__)
@@ -65,7 +67,6 @@ def demo_data(engines: int = 5, cycles: int = 60, seed: int = 42) -> pd.DataFram
                     fuel / thrust,
                 ]
             )
-    from src.dataset.loader import TARGETS
 
     return pd.DataFrame(rows, columns=FEATURES + TARGETS)
 
@@ -77,7 +78,8 @@ def main() -> None:
     train = commands.add_parser("train")
     train.add_argument("--data", required=True)
     train.add_argument("--output", default="models/best_model.joblib")
-    train.add_argument("--kind", default="extra_trees")
+    train.add_argument("--kind", default="extra_trees",
+                       choices=["hist_gradient_boosting", "extra_trees", "random_forest", "stacking", "hybrid"])
     train.add_argument("--n-estimators", type=int, default=300)
     train.add_argument("--strategy", default="official", choices=["official", "grouped"])
     tune = commands.add_parser("tune")
@@ -106,6 +108,15 @@ def main() -> None:
     predict.add_argument("--data", required=True)
     predict.add_argument("--model", default="models/best_model.joblib")
     predict.add_argument("--output", default="results/predictions.csv")
+    validate_cmd = commands.add_parser("validation")
+    validate_cmd.add_argument("--data", default="data/turbojet_complete_dataset.csv")
+    validate_cmd.add_argument("--output-dir", default="results/validation")
+    benchmark_cmd = commands.add_parser("benchmark")
+    benchmark_cmd.add_argument("--data", default="data/turbojet_complete_dataset.csv")
+    benchmark_cmd.add_argument("--output-dir", default="results/benchmarks")
+    orchestrate_cmd = commands.add_parser("orchestrate")
+    orchestrate_cmd.add_argument("--data", default="data/turbojet_complete_dataset.csv")
+    orchestrate_cmd.add_argument("--output-dir", default="results")
     commands.add_parser("demo")
     args = parser.parse_args()
     configure_logging()
@@ -131,6 +142,12 @@ def main() -> None:
         LOGGER.info("tune complete best_config=%s", json.dumps(config))
     elif args.command == "evaluate":
         LOGGER.info("metrics=%s", json.dumps(evaluate_model(args.model, args.data)))
+    elif args.command == "validation":
+        results = run_validation_suite(data_path=args.data, output_dir=args.output_dir)
+        LOGGER.info("validation complete %d experiments", len(results))
+    elif args.command == "benchmark":
+        results = run_benchmark_suite(data_path=args.data, output_dir=args.output_dir)
+        LOGGER.info("benchmark complete %d variants", len(results))
     elif args.command == "experiment":
         result = run_experiment(
             args.data, kind=args.kind, n_estimators=args.n_estimators,
@@ -155,6 +172,26 @@ def main() -> None:
             experiments.append(json.loads(f.read_text(encoding="utf-8")))
         generate_research_report(experiments, args.output)
         LOGGER.info("report generated with %d experiments", len(experiments))
+
+    elif args.command == "orchestrate":
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        LOGGER.info("=== TRAIN ALL VARIANTS ===")
+        kinds = ["hist_gradient_boosting", "extra_trees", "stacking", "hybrid"]
+        trained = {}
+        for kind in kinds:
+            local_out = output_dir / "models" / f"{kind}.joblib"
+            local_out.parent.mkdir(parents=True, exist_ok=True)
+            metrics = train_from_csv(args.data, str(local_out), kind=kind)
+            trained[kind] = metrics
+            LOGGER.info("%s: rmse=%.2f r2=%.4f", kind, metrics.get("rmse", 0), metrics.get("r2", 0))
+        LOGGER.info("=== VALIDATION SUITE ===")
+        run_validation_suite(data_path=args.data, output_dir=output_dir / "validation")
+        LOGGER.info("=== PERFORMANCE BENCHMARK ===")
+        run_benchmark_suite(data_path=args.data, output_dir=output_dir / "benchmarks")
+        summary = output_dir / "orchestrate_summary.json"
+        summary.write_text(json.dumps(trained, indent=2), encoding="utf-8")
+        LOGGER.info("orchestrate complete — all artifacts in %s", output_dir)
 
     elif args.command == "predict":
         frame = load_dataset(args.data, require_targets=False)
