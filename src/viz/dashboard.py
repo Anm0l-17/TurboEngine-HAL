@@ -69,14 +69,11 @@ if uploaded is None:
     st.info("Upload an official-schema CSV to begin inference.")
     st.stop()
 
-try:
-    data = pd.read_csv(uploaded)
+@st.cache_data(show_spinner="Processing sensor data and running inference...")
+def run_inference(file_bytes: bytes, model_path: str, estimator_method: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    import io
+    data = pd.read_csv(io.BytesIO(file_bytes))
     data = data.rename(columns={k: v for k, v in _COLUMN_ALIASES.items() if k in data.columns})
-    show_debug = st.sidebar.checkbox("Show raw data", False)
-    if show_debug:
-        st.subheader("Raw Input")
-        st.dataframe(data.head(10), width="stretch")
-
     outputs = []
     for engine_id, group in data.groupby("EngineID", sort=False):
         group = group.sort_values("Cycle").reset_index(drop=True)
@@ -88,6 +85,15 @@ try:
         outputs.append(result)
     output = pd.concat(outputs, ignore_index=True)
     output = output.loc[:, ~output.columns.duplicated()]
+    return data, output
+
+try:
+    file_bytes = uploaded.getvalue()
+    data, output = run_inference(file_bytes, model_path, estimator_method)
+    show_debug = st.sidebar.checkbox("Show raw data", False)
+    if show_debug:
+        st.subheader("Raw Input")
+        st.dataframe(data.head(10), width="stretch")
 
     latest = output.iloc[-1]
     latest_per_engine = output.sort_values("Cycle").groupby("EngineID", as_index=False).tail(1)
