@@ -21,13 +21,17 @@ from src.viz.plots import (
 st.set_page_config(page_title="Turbojet Digital Twin", page_icon="✈", layout="wide")
 st.markdown("""
 <style>
-    .main > div { padding: 1rem 1.5rem; }
-    .stMetric { background: #f8fafc; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; }
+    .main .block-container { padding: 1rem 1.5rem; }
+    .stMetric { background: #f8fafc; padding: 0.75rem 0.5rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; min-height: 5rem; }
+    .stMetric * { color: #1e293b !important; }
+    .stMetric label { color: #475569 !important; font-weight: 600; font-size: 0.75rem !important; white-space: normal !important; word-wrap: break-word !important; }
+    .stMetric [data-testid="stMetricValue"] { font-size: 1.1rem !important; white-space: normal !important; word-wrap: break-word !important; }
     .st-bb { border-bottom: 2px solid #6366f1; }
     h1 { color: #1e293b; }
     h2, h3 { color: #334155; }
     .stButton button { background: #6366f1; color: white; border-radius: 0.375rem; }
     .stSelectbox label, .stSlider label { font-weight: 600; color: #475569; }
+    div[data-testid="column"] { overflow: visible; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -120,14 +124,14 @@ try:
 
         left, right = st.columns(2)
         with left:
-            st.plotly_chart(health_gauge(float(latest["OverallHealth"])), use_container_width=True)
+            st.plotly_chart(health_gauge(float(latest["OverallHealth"])), width='stretch')
         with right:
             schematic_health = {
                 "CompressorHealth": float(latest["CompressorHealth"]),
                 "CombustorHealth": float(latest["CombustorHealth"]),
                 "TurbineHealth": float(latest["TurbineHealth"]),
             }
-            st.plotly_chart(engine_schematic(schematic_health), use_container_width=True)
+            st.plotly_chart(engine_schematic(schematic_health), width='stretch')
 
         cols = st.multiselect(
             "Trend lines", ["OverallHealth", "Confidence", "RULCycles", "FailureProbability"],
@@ -135,7 +139,7 @@ try:
         )
         if cols:
             st.plotly_chart(trend(latest_engine_output, cols, "Health & Confidence Trend"),
-                            use_container_width=True)
+                            width='stretch')
 
     elif page in {"Engine Health", "Performance", "RUL & Risk"}:
         col_map = {
@@ -146,7 +150,7 @@ try:
         columns = col_map[page]
         st.plotly_chart(health_trajectory_plot(latest_engine_output) if page == "Engine Health"
                         else trend(latest_engine_output, columns, page),
-                        use_container_width=True)
+                        width='stretch')
         st.dataframe(latest_engine_output[["Cycle"] + columns].tail(10), width="stretch")
 
     elif page == "Trade-Off Analysis":
@@ -160,14 +164,14 @@ try:
             st.plotly_chart(
                 pareto_frontier(
                     valid[x_axis].values, valid[y_axis].values, valid["Thrust"].values
-                ), use_container_width=True
+                ), width='stretch'
             )
         st.subheader("Per-Engine Trade Space")
         for eid in sorted(output["EngineID"].unique()):
             eng = output[output["EngineID"] == eid]
             st.plotly_chart(
                 trend(eng, [x_axis, y_axis], f"Engine {eid}"),
-                use_container_width=True,
+                width='stretch',
             )
 
     elif page == "Parameter Sweep":
@@ -221,7 +225,7 @@ try:
                     calibration_plot(
                         pred[target].values, lower[target].values, upper[target].values,
                         actual[target].values, target,
-                    ), use_container_width=True
+                    ), width='stretch'
                 )
                 st.info(f"Nominal coverage: {coverage:.1%}")
                 in_interval = ((actual[target].values >= lower[target].values) &
@@ -234,7 +238,7 @@ try:
         st.subheader("Degradation Trajectory Analysis")
         engine_choice = st.selectbox("Engine", sorted(output["EngineID"].unique()))
         eng_out = output[output["EngineID"] == engine_choice].sort_values("Cycle").reset_index(drop=True)
-        st.plotly_chart(health_trajectory_plot(eng_out), use_container_width=True)
+        st.plotly_chart(health_trajectory_plot(eng_out), width='stretch')
         st.metric("Initial Health", f"{eng_out['OverallHealth'].iloc[0]:.1%}")
         st.metric("Final Health", f"{eng_out['OverallHealth'].iloc[-1]:.1%}")
         total_drop = eng_out['OverallHealth'].iloc[0] - eng_out['OverallHealth'].iloc[-1]
@@ -245,7 +249,7 @@ try:
         st.subheader("Feature Correlation Analysis")
         n_features = st.slider("Features to include", 5, 20, 12)
         corr_cols = data.select_dtypes(include=[np.number]).columns[:n_features].tolist()
-        st.plotly_chart(correlation_heatmap(data, corr_cols), use_container_width=True)
+        st.plotly_chart(correlation_heatmap(data, corr_cols), width='stretch')
 
     elif page == "Fleet Comparison":
         st.subheader("Fleet-Wide Comparison")
@@ -256,7 +260,7 @@ try:
         st.dataframe(ranked.style
                      .highlight_min(["OverallHealth"], color="#fecaca")
                      .highlight_max(["RiskScore"], color="#fecaca"),
-                     width="stretch", use_container_width=True)
+                     width="stretch")
 
     elif page == "Model Explainability":
         st.subheader("Model Explainability (SHAP / Permutation Importance)")
@@ -326,7 +330,7 @@ try:
                             "height": 600,
                         },
                     }
-                    st.plotly_chart(fig, use_container_width=False)
+                    st.plotly_chart(fig, width='content')
 
             except Exception as e:
                 st.warning(f"SHAP explanation unavailable: {e}")
@@ -455,7 +459,7 @@ try:
         )
         options_df = pd.DataFrame([vars(o) for o in options])
         st.dataframe(options_df.style.highlight_max(["Utility"], color="#bbf7d0"),
-                     width="stretch", use_container_width=True)
+                     width="stretch")
         st.success(f"Top recommendation: **{options[0].action}**")
         st.caption(options[0].rationale)
 
