@@ -113,10 +113,6 @@ flowchart TB
 | Health Trajectories | Thrust / TSFC Trends |
 |---|---|
 | ![Health Trajectories](docs/assets/screenshots/health_trajectories_dashboard.png) | ![Thrust TSFC Trends](docs/assets/screenshots/thrust_tsfc_trends.png) |
-
-| RUL & Failure Probability |
-|---|---|
-| ![RUL Failure Probability](docs/assets/screenshots/rul_failure_probability_trends.png) |
 </div>
 
 The dashboard includes **18 pages** accessible from the sidebar. Key additions beyond standard monitoring:
@@ -419,8 +415,18 @@ The feature engineering step (`src/dataset/features.py`) adds 20 derived feature
 
 ---
 
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Mermaid diagram shows "Unable to render rich display" | Unquoted `&` in node labels treated as parallel-edge operator | Wrap labels containing `&` in double quotes |
+| Streamlit metrics show white boxes with no text | Missing text color on `.stMetric` elements | Add `color` to `.stMetric` CSS |
+| Dashboard page loads slowly on every navigation | Full inference pipeline re-runs on each script execution | Results now cached with `@st.cache_data` |
+| Trade-Off Analysis crashes with "unsupported format string" | Duplicate column names when y-axis equals "Thrust" | Column list deduplicated with `dict.fromkeys()` |
+| Parameter Sweep shows "not in index" | Input parameter not included in sweep result dicts | Parameter value now stored in each result entry |
+
+---
+
 ## License
 
 Released under the [MIT License](LICENSE).
-
-</div>
