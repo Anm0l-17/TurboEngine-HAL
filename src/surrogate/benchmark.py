@@ -1,7 +1,6 @@
 """Deterministic surrogate benchmarking with per-target metrics."""
 
 from dataclasses import dataclass, field
-from typing import Any
 import pandas as pd
 from src.dataset.loader import TARGETS
 from src.metrics.regression import regression_metrics
@@ -35,7 +34,7 @@ def benchmark(
                 BenchmarkResult(kind, metrics["rmse"], metrics["mae"], metrics["per_target"])
             )
             models.append(model)
-        except Exception as e:
+        except Exception:
             results.append(BenchmarkResult(kind, float("inf"), float("inf")))
             models.append(None)
     valid = [(i, r) for i, r in enumerate(results) if r.rmse < float("inf")]

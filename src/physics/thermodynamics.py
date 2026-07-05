@@ -1,7 +1,7 @@
 """Reusable ideal-gas thermodynamic relations."""
 
 import math
-from .constants import GAS_CONSTANT_AIR, GAMMA_AIR, isa_pressure, isa_temperature
+from .constants import GAS_CONSTANT_AIR, isa_pressure, isa_temperature
 
 
 def total_temperature(static_temperature: float, mach: float, gamma: float = 1.4) -> float:

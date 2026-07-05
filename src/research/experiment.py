@@ -1,6 +1,6 @@
 """Experiment tracking for reproducible research workflows."""
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -9,7 +9,6 @@ import pandas as pd
 from src.dataset.loader import TARGETS, load_dataset
 from src.dataset.split import grouped_split, official_split
 from src.metrics.regression import regression_metrics
-from src.surrogate.benchmark import benchmark
 from src.surrogate.train import create_model
 
 
