@@ -159,7 +159,8 @@ try:
         perf_cols = ["Thrust", "TSFC", "DegradationRate", "FailureProbability"]
         x_axis = st.selectbox("X-axis", health_cols + perf_cols, index=3)
         y_axis = st.selectbox("Y-axis", health_cols + perf_cols, index=4)
-        valid = output[[x_axis, y_axis, "Thrust"]].dropna()
+        cols = list(dict.fromkeys([x_axis, y_axis, "Thrust"]))
+        valid = output[cols].dropna()
         if len(valid) > 1:
             st.plotly_chart(
                 pareto_frontier(
@@ -195,7 +196,9 @@ try:
             obs = base_row.copy()
             obs[param] = v
             try:
-                sweep_results.append(twin_sweep.update(obs))
+                result = twin_sweep.update(obs)
+                result[param] = v
+                sweep_results.append(result)
             except (ValueError, KeyError):
                 continue
         if sweep_results:
