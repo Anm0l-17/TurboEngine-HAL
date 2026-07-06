@@ -298,14 +298,14 @@ try:
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown("**Global Feature Importance**")
-                    imp_df = pd.DataFrame(explanation["global_importance"])
+                    imp_df = pd.DataFrame(explanation["global_importance"]).replace([np.inf, -np.inf], np.nan).dropna(subset=["importance"])
                     if not imp_df.empty:
                         imp_df = imp_df.sort_values("importance", ascending=True)
                         st.bar_chart(imp_df.set_index("feature"), height=400)
                 with col2:
                     st.markdown("**Local Explanations (Row 1)**")
                     if explanation["local_explanations"]:
-                        local_df = pd.DataFrame(explanation["local_explanations"][0]["factors"])
+                        local_df = pd.DataFrame(explanation["local_explanations"][0]["factors"]).replace([np.inf, -np.inf], np.nan).dropna(subset=["shap_value"])
                         if not local_df.empty:
                             local_df = local_df.sort_values("shap_value", ascending=True)
                             st.bar_chart(local_df.set_index("feature"), height=400)
@@ -349,7 +349,7 @@ try:
             except Exception as e:
                 st.warning(f"SHAP explanation unavailable: {e}")
                 try:
-                    imp_df = pd.DataFrame(explanation.get("global_importance", []))
+                    imp_df = pd.DataFrame(explanation.get("global_importance", [])).replace([np.inf, -np.inf], np.nan).dropna(subset=["importance"])
                     if not imp_df.empty:
                         st.bar_chart(imp_df.set_index("feature"), height=400)
                 except Exception:
