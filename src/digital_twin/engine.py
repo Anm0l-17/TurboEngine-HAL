@@ -14,6 +14,7 @@ from src.maintenance.recommendation import recommend
 from src.physics.cycle_model import BraytonCycle, CycleInput
 from src.prediction.failure_probability import FailureProbabilityCalibrator, failure_probability
 from src.prediction.rul import RULConfig, estimate_rul
+from src.surrogate.hybrid import HybridPhysicsMLModel
 from src.surrogate.model import SurrogateModel
 
 _HEALTH_TARGETS = ["CompressorHealth", "CombustorHealth", "TurbineHealth", "OverallHealth"]
@@ -27,7 +28,7 @@ class DigitalTwin:
         self.estimator_method = estimator_method
         self.physics = BraytonCycle()
         self.estimator = StateEstimator(method=estimator_method)
-        self.model: SurrogateModel | None = None
+        self.model: SurrogateModel | HybridPhysicsMLModel | None = None
         self.history: list[dict[str, Any]] = []
         self.fault_injector: FaultInjector = FaultInjector()
         self.failure_calibrator: FailureProbabilityCalibrator | None = None
@@ -44,8 +45,15 @@ class DigitalTwin:
         return self
 
     def load_model(self, path: str | Path) -> "DigitalTwin":
-        """Load a trained surrogate artifact."""
-        self.model = SurrogateModel.load(path)
+        """Load a trained surrogate artifact (SurrogateModel or HybridPhysicsMLModel)."""
+        import joblib
+        artifact = joblib.load(path)
+        if isinstance(artifact, dict) and "ml_model" in artifact:
+            self.model = HybridPhysicsMLModel.load(path)
+        elif isinstance(artifact, SurrogateModel):
+            self.model = artifact
+        else:
+            raise TypeError(f"artifact is a {type(artifact).__name__}, expected SurrogateModel or HybridPhysicsMLModel")
         return self
 
     def _point_bundle(
