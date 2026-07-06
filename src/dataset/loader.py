@@ -3,9 +3,11 @@
 from pathlib import Path
 import pandas as pd
 
-FEATURES = [
-    "EngineID",
-    "Cycle",
+# Identifier columns for grouping/tracking only — NEVER as model input features.
+IDENTIFIER_COLUMNS = ["EngineID", "Cycle"]
+
+# Physical sensor readings only — these are the legitimate model input features.
+SENSOR_FEATURES = [
     "Altitude",
     "Mach",
     "Tamb",
@@ -19,6 +21,10 @@ FEATURES = [
     "P4",
     "T4",
 ]
+
+# Legacy full feature list (includes identifiers).
+# WARNING: Do NOT use FEATURES for model training/inference — use SENSOR_FEATURES instead.
+FEATURES = IDENTIFIER_COLUMNS + SENSOR_FEATURES
 TARGETS = [
     "CompressorHealth",
     "CombustorHealth",

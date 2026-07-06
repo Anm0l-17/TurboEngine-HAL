@@ -14,7 +14,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from src.dataset.features import RESIDUAL_COLUMNS
-from src.dataset.loader import FEATURES, TARGETS
+from src.dataset.loader import SENSOR_FEATURES, TARGETS
 from src.dataset.preprocess import build_preprocessor
 from .model import SurrogateModel
 
@@ -35,7 +35,7 @@ _ENGINEERED_COLUMNS = [
     "CorrectedFuelFlow",
     *RESIDUAL_COLUMNS,
 ]
-PIPELINE_FEATURES = FEATURES + _ENGINEERED_COLUMNS
+PIPELINE_FEATURES = SENSOR_FEATURES + _ENGINEERED_COLUMNS
 
 _HEALTH_TARGETS = ["CompressorHealth", "CombustorHealth", "TurbineHealth", "OverallHealth"]
 _PERF_TARGETS = ["Thrust", "TSFC"]
@@ -131,5 +131,5 @@ def create_model(
         [("preprocess", build_preprocessor(PIPELINE_FEATURES)), ("model", estimator)]
     )
     return SurrogateModel(
-        pipeline, FEATURES, TARGETS, PIPELINE_FEATURES, target_scalers=target_scalers
+        pipeline, SENSOR_FEATURES, TARGETS, PIPELINE_FEATURES, target_scalers=target_scalers
     )

@@ -6,7 +6,7 @@ from typing import Any
 import json
 import numpy as np
 import pandas as pd
-from src.dataset.loader import FEATURES, TARGETS
+from src.dataset.loader import IDENTIFIER_COLUMNS, SENSOR_FEATURES, TARGETS
 from src.estimation.state_estimator import StateEstimator
 from src.faults.injection import FaultInjector
 from src.health.overall import overall_health
@@ -73,7 +73,7 @@ class DigitalTwin:
         cycle_index = observation.get("Cycle")
         observation = self.fault_injector.apply_to_observation(observation, cycle_index)
         if self.model is not None:
-            frame = pd.DataFrame([{name: observation[name] for name in FEATURES}])
+            frame = pd.DataFrame([{name: observation[name] for name in SENSOR_FEATURES}])
             prediction, lower, upper, confidence = self.model.predict_with_uncertainty(frame)
             method = "conformal" if confidence > 0 else "uncalibrated_point"
             return {
@@ -215,7 +215,7 @@ class DigitalTwin:
         precomputed_rows = None
         if self.model is not None and not self.fault_injector.faults:
             prediction, lower, upper, confidence = self.model.predict_with_uncertainty(
-                frame[FEATURES]
+                frame[SENSOR_FEATURES]
             )
             method = "conformal" if confidence > 0 else "uncalibrated_point"
             precomputed_rows = [

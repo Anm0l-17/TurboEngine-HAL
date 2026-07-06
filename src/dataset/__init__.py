@@ -1,12 +1,14 @@
 """Dataset ingestion, validation, and feature engineering."""
 
-from .loader import FEATURES, TARGETS, load_dataset
+from .loader import FEATURES, IDENTIFIER_COLUMNS, SENSOR_FEATURES, TARGETS, load_dataset
 from .features import RESIDUAL_COLUMNS, engineer_all_features, engineer_features
 from .split import grouped_split, official_split
 from .validation import ValidationResult, validate_frame
 
 __all__ = [
     "FEATURES",
+    "IDENTIFIER_COLUMNS",
+    "SENSOR_FEATURES",
     "TARGETS",
     "RESIDUAL_COLUMNS",
     "ValidationResult",
