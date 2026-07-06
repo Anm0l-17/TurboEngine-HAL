@@ -75,6 +75,3 @@ data/test_merged.csv
 Thumbs.db
 .vscode/
 .idea/
-
-AUDIT_REPORT.md
-final_metrics_raw.txt
