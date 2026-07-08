@@ -60,9 +60,11 @@ class AdaptiveConformalRegressor:
             raise RuntimeError("call fit() before predict_interval()")
 
         test_scaled = self.scaler_.transform(np.asarray(test_features, dtype=float))
-        values = np.asarray(point_predictions, dtype=float)
+        raw = np.asarray(point_predictions, dtype=float)
+        was_1d = raw.ndim == 1
+        values = raw.reshape(-1, 1) if was_1d else raw
         n_test = test_scaled.shape[0]
-        n_targets = values.shape[1] if values.ndim > 1 else 1
+        n_targets = values.shape[1]
         lower = np.zeros_like(values)
         upper = np.zeros_like(values)
 
@@ -80,6 +82,10 @@ class AdaptiveConformalRegressor:
                 weighted_quantile = _weighted_quantile(residuals, weights, self.coverage)
                 lower[i, j] = values[i, j] - weighted_quantile
                 upper[i, j] = values[i, j] + weighted_quantile
+
+        if was_1d:
+            lower = lower.ravel()
+            upper = upper.ravel()
 
         # Empirical coverage on calibration set
         coverage_mask = self.cal_residuals_ <= np.percentile(
