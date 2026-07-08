@@ -25,7 +25,8 @@ def _snapshot(cycle_input: CycleInput, sensor_noise_std: float = 0.0) -> dict:
     cycle = physics.evaluate(state)
     health = overall_health(state.compressor_health, state.combustor_health, state.turbine_health)
     rul = estimate_rul(
-        np.array([0.0, 1.0]), np.array([1.0, health]),
+        np.array([0.0, 1.0]),
+        np.array([1.0, health]),
         RULConfig(failure_threshold=0.3),
     )
     remaining = min(rul.remaining_cycles, 5000.0)
@@ -42,10 +43,9 @@ def _snapshot(cycle_input: CycleInput, sensor_noise_std: float = 0.0) -> dict:
     }
 
 
-def simulate_scenario(
-    baseline_observation: dict, adjustment: ScenarioAdjustment
-) -> dict:
+def simulate_scenario(baseline_observation: dict, adjustment: ScenarioAdjustment) -> dict:
     """Compare baseline vs adjusted operating conditions. Returns dict with baseline, adjusted, delta."""
+
     def _make_input(overrides: dict) -> CycleInput:
         return CycleInput(
             altitude_m=overrides.get("altitude_m", baseline_observation.get("Altitude", 0.0)),

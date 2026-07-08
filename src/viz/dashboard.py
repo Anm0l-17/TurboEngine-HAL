@@ -92,9 +92,7 @@ if uploaded is None:
 
 
 @st.cache_data(show_spinner="Processing sensor data and running inference...")
-def run_inference(
-    file_bytes: bytes, model_path: str
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+def run_inference(file_bytes: bytes, model_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     import io
 
     data = pd.read_csv(io.BytesIO(file_bytes))
@@ -875,6 +873,7 @@ try:
     elif page == "Maintenance Options":
         st.subheader("Maintenance Recommendation")
         from src.maintenance.recommendation import recommend
+
         decision = recommend(
             float(latest["OverallHealth"]),
             float(latest["RULCycles"]),
