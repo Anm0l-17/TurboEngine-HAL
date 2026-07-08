@@ -1,79 +1,39 @@
 .venv/
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 .pytest_cache/
 .coverage
 htmlcov/
 .ruff_cache/
 models/*.joblib
 results/*
-!models/.gitkeep
-!results/.gitkeep
+!.gitkeep
 .env
-
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Virtual environment
-.venv/
-venv/
-
-# Build artifacts
 build/
 dist/
 *.egg-info/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Jupyter
+static/
 .ipynb_checkpoints/
-
-# IDE
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
-
-*.egg-info/
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.egg-info/
-.venv/
-venv/
-.env
-
-# Backup files
 *.bak
-
-# Models & generated artifacts
-models/*.json
 *.metrics.json
 *.config.json
-
-# Data
 data/train_merged.csv
 data/test_merged.csv
-
-# Reports & presentations
 *.pdf
 *.pptx
+*.zip
+*.snapshot.*
 
-# Jupyter
-.ipynb_checkpoints/
+# CAD mesh binaries (reproducible via scripts/convert_engine_cad.py)
+models/engine_meshes/**/*.vtp
+models/engine_meshes/_step_src/
+_tmp_*.stp
 
-# OS / Editor
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-AUDIT_REPORT.md
-final_metrics_raw.txt
+# Streamlit runtime config
+.streamlit/
