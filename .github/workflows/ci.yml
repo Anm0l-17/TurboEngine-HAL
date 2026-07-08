@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: pyproject.toml
       - name: Install system deps (xvfb for headless 3D)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends xvfb
-      - run: pip install -e ".[dev,viz3d]"
+      - run: pip install -e ".[dev,viz3d,api,dashboard]"
       - run: pip install shap psutil
       - name: Run fast tests with coverage
         run: xvfb-run python -m pytest --cov=src --cov-report=xml -m "not slow"
