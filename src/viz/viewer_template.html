@@ -1284,6 +1284,17 @@ if (ENGINE_DATA.sensors) {
 if (ENGINE_DATA.replay && ENGINE_DATA.replay.length) {
   updateHUD(ENGINE_DATA.replay[0]);
 }
+
+// Auto-show replay bar and start playback if multiple frames
+if (ENGINE_DATA.replay && ENGINE_DATA.replay.length > 1) {
+  const bar = document.getElementById('replay-bar');
+  bar.classList.add('visible');
+  state.replayData = ENGINE_DATA.replay;
+  initReplay();
+  state.replayPlaying = true;
+  document.getElementById('replayPlayBtn').textContent = '\u23F8';
+  document.getElementById('hud').classList.add('visible');
+}
 if (ENGINE_DATA.sensors && Object.values(ENGINE_DATA.sensors).some(s => s.value !== undefined)) {
   document.getElementById('hud').classList.add('visible');
 }
