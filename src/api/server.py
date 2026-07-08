@@ -115,7 +115,7 @@ def batch_engine(engine_id: str, observations: list["Observation"]) -> list[dict
 
 
 @app.post("/v1/scenarios/simulate")
-def simulate_scenario(request: ScenarioRequest) -> dict[str, Any]:
+def run_scenario(request: ScenarioRequest) -> dict[str, Any]:
     """Run a what-if scenario and return a before/after comparison with root cause."""
     try:
         adjustment = ScenarioAdjustment(
