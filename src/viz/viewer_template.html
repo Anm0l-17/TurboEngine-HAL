@@ -374,11 +374,10 @@ function buildStreamlines() {
   const curve = new THREE.CatmullRomCurve3(pts);
 
   const positions = new Float32Array(STREAM_COUNT * 3);
-  const speeds = new Float32Array(STREAM_COUNT);
 
   for (let i = 0; i < STREAM_COUNT; i++) {
     streamOffsets[i] = Math.random();
-    speeds[i] = 0.002 + Math.random() * 0.004;
+    streamSpeeds[i] = 0.002 + Math.random() * 0.004;
     const t = streamOffsets[i];
     const pt = curve.getPoint(t);
     positions[i*3] = pt.x;
@@ -411,7 +410,7 @@ function updateStreamlines(delta, rpmVal) {
   const pos = streamParticlePositions.array;
 
   for (let i = 0; i < STREAM_COUNT; i++) {
-    streamOffsets[i] = (streamOffsets[i] + speeds[i] * delta * speedScale) % 1.0;
+    streamOffsets[i] = (streamOffsets[i] + streamSpeeds[i] * delta * speedScale) % 1.0;
     const pt = curve.getPoint(streamOffsets[i]);
     pos[i*3] = pt.x;
     pos[i*3+1] = pt.y;
@@ -1452,6 +1451,7 @@ document.getElementById('replaySeek').addEventListener('input', (e) => {
 let rpm = 12000;
 let faultPulse = 0;
 const streamOffsets = new Float32Array(STREAM_COUNT);
+const streamSpeeds = new Float32Array(STREAM_COUNT);
 
 function animate() {
   requestAnimationFrame(animate);
