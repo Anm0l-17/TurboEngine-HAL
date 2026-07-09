@@ -14,7 +14,7 @@ from src.training.evaluate import evaluate_model
 from src.training.hyperparameter_search import select_model
 from src.training.trainer import train_from_csv
 from src.utils.logging import configure_logging
-from src.validation.benchmark import run_validation_suite
+from src.validation.benchmark import run_cmapss_validation, run_validation_suite
 from src.performance.benchmark import run_benchmark_suite
 from src.utils.paths import ensure_directories
 
@@ -78,6 +78,9 @@ def main() -> None:
     validate_cmd = commands.add_parser("validation")
     validate_cmd.add_argument("--data", default="data/turbojet_complete_dataset.csv")
     validate_cmd.add_argument("--output-dir", default="results/validation")
+    cmapss_cmd = commands.add_parser("cmapss")
+    cmapss_cmd.add_argument("--data-dir", default="data/cmapss")
+    cmapss_cmd.add_argument("--output-dir", default="results/cmapss")
     benchmark_cmd = commands.add_parser("benchmark")
     benchmark_cmd.add_argument("--data", default="data/turbojet_complete_dataset.csv")
     benchmark_cmd.add_argument("--output-dir", default="results/benchmarks")
@@ -115,6 +118,10 @@ def main() -> None:
         LOGGER.info("tune complete best_config=%s", json.dumps(config))
     elif args.command == "evaluate":
         LOGGER.info("metrics=%s", json.dumps(evaluate_model(args.model, args.data)))
+    elif args.command == "cmapss":
+        results = run_cmapss_validation(data_dir=args.data_dir, output_dir=args.output_dir)
+        total = sum(len(v) for v in results.values())
+        LOGGER.info("cmapss validation complete %d model×subset runs", total)
     elif args.command == "validation":
         results = run_validation_suite(data_path=args.data, output_dir=args.output_dir)
         LOGGER.info("validation complete %d experiments", len(results))

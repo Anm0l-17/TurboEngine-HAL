@@ -1,0 +1,59 @@
+{
+  "experiment_id": "extra_trees_official_20260709_160403",
+  "timestamp": "2026-07-09T16:04:03.994912",
+  "config": {
+    "kind": "extra_trees",
+    "n_estimators": 300,
+    "split_strategy": "official",
+    "scale_targets": true,
+    "seed": 42,
+    "data": "data/turbojet_complete_dataset.csv",
+    "tag": "ablation"
+  },
+  "metrics": {
+    "rmse": 694.8509977705626,
+    "mae": 221.79282785040917,
+    "mape": 2.339903080175087,
+    "r2": 0.7406989430804619,
+    "explained_variance": 0.7658024240068521,
+    "per_target": {
+      "CompressorHealth": {
+        "rmse": 0.027498754624459786,
+        "mae": 0.016670574683012505,
+        "mape": 1.9068436756023617,
+        "r2": 0.7601774186641632
+      },
+      "CombustorHealth": {
+        "rmse": 0.019069893840525837,
+        "mae": 0.01550847251042103,
+        "mape": 1.635485909894024,
+        "r2": 0.4520612830028581
+      },
+      "TurbineHealth": {
+        "rmse": 0.03210937558533974,
+        "mae": 0.022766110280737877,
+        "mape": 2.5825225724989185,
+        "r2": 0.4970114354292515
+      },
+      "OverallHealth": {
+        "rmse": 0.019818466918517484,
+        "mae": 0.014359348060163512,
+        "mape": 1.5876966926453577,
+        "r2": 0.7628679384104461
+      },
+      "Thrust": {
+        "rmse": 1702.0303910544171,
+        "mae": 1330.687662020817,
+        "mape": 3.4108318833561224,
+        "r2": 0.9870409837923345
+      },
+      "TSFC": {
+        "rmse": 7.273714792514681e-07,
+        "mae": 5.761036533338696e-07,
+        "mape": 2.916037747053737,
+        "r2": 0.9850345991837182
+      }
+    }
+  },
+  "model_path": "results\\experiments\\extra_trees_official_20260709_160403.joblib"
+}

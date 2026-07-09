@@ -1,0 +1,59 @@
+{
+  "experiment_id": "hist_gradient_boosting_grouped_20260709_160541",
+  "timestamp": "2026-07-09T16:05:42.106655",
+  "config": {
+    "kind": "hist_gradient_boosting",
+    "n_estimators": 300,
+    "split_strategy": "grouped",
+    "scale_targets": true,
+    "seed": 42,
+    "data": "data/turbojet_complete_dataset.csv",
+    "tag": "ablation"
+  },
+  "metrics": {
+    "rmse": 776.786959429732,
+    "mae": 221.21723214159564,
+    "mape": 2.4730290136489113,
+    "r2": 0.7207691652494804,
+    "explained_variance": 0.7875768915362986,
+    "per_target": {
+      "CompressorHealth": {
+        "rmse": 0.033113381410444884,
+        "mae": 0.01940397810812095,
+        "mape": 2.098084009223088,
+        "r2": 0.685782771906841
+      },
+      "CombustorHealth": {
+        "rmse": 0.029452263205005394,
+        "mae": 0.024759884333554086,
+        "mape": 2.6574540317348414,
+        "r2": 0.21611626413578278
+      },
+      "TurbineHealth": {
+        "rmse": 0.025298654441386514,
+        "mae": 0.01848817363873437,
+        "mape": 1.990725023753076,
+        "r2": 0.7201982672506828
+      },
+      "OverallHealth": {
+        "rmse": 0.02443074860911532,
+        "mae": 0.01678851602539216,
+        "mape": 1.8117723068779727,
+        "r2": 0.740479316034777
+      },
+      "Thrust": {
+        "rmse": 1902.7316886097506,
+        "mae": 1327.2239515298995,
+        "mape": 2.8335918111543084,
+        "r2": 0.9846491739664068
+      },
+      "TSFC": {
+        "rmse": 1.017627511444895e-06,
+        "mae": 7.675685810082132e-07,
+        "mape": 3.4465468991501815,
+        "r2": 0.9773891982023916
+      }
+    }
+  },
+  "model_path": "results\\experiments\\hist_gradient_boosting_grouped_20260709_160541.joblib"
+}

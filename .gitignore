@@ -37,3 +37,6 @@ _tmp_*.stp
 
 # Streamlit runtime config
 .streamlit/
+
+# Downloaded C-MAPSS data (reproducible via `python pipeline.py cmapss`)
+data/cmapss/
