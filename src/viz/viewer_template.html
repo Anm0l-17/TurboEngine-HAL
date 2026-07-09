@@ -159,10 +159,10 @@ const state = {
   replayPlaying: false,
   replayDuration: 0,
   healthAnchors: [
-    { threshold: 0.85, color: [0.2, 0.85, 0.2] },
-    { threshold: 0.60, color: [0.85, 0.80, 0.15] },
-    { threshold: 0.35, color: [0.95, 0.50, 0.10] },
-    { threshold: 0.00, color: [0.85, 0.15, 0.15] },
+    { threshold: 0.85, color: [0.15, 0.70, 0.15] },
+    { threshold: 0.60, color: [0.85, 0.75, 0.10] },
+    { threshold: 0.35, color: [0.95, 0.45, 0.08] },
+    { threshold: 0.00, color: [0.90, 0.10, 0.10] },
   ],
   healthLabels: [
     { threshold: 0.85, label: 'Healthy' },
@@ -171,13 +171,13 @@ const state = {
     { threshold: 0.00, label: 'Failed' },
   ],
   cameraPresets: {
-    isometric:  { pos: [6000,-4000,2000], target: [0,0,0] },
-    front:      { pos: [7000,0,0],        target: [0,0,0] },
-    rear:       { pos: [-7000,0,0],       target: [0,0,0] },
-    left:       { pos: [0,6000,0],        target: [0,0,0] },
-    right:      { pos: [0,-6000,0],       target: [0,0,0] },
-    top:        { pos: [0,0,6000],        target: [0,0,0] },
-    bottom:     { pos: [0,0,-6000],       target: [0,0,0] },
+    isometric:  { pos: [5000,-3200,2000], target: [0,0,0] },
+    front:      { pos: [5800,0,0],        target: [0,0,0] },
+    rear:       { pos: [-5800,0,0],       target: [0,0,0] },
+    left:       { pos: [0,5000,0],        target: [0,0,0] },
+    right:      { pos: [0,-5000,0],       target: [0,0,0] },
+    top:        { pos: [0,0,5000],        target: [0,0,0] },
+    bottom:     { pos: [0,0,-5000],       target: [0,0,0] },
   },
   theme: 'dark',
   measureMode: false,
@@ -217,15 +217,15 @@ container.appendChild(labelRenderer.domElement);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d0d1a);
 
-const camera = new THREE.PerspectiveCamera(35, w/h, 10, 50000);
-camera.position.set(6000, -4000, 2500);
+const camera = new THREE.PerspectiveCamera(40, w/h, 10, 50000);
+camera.position.set(5000, -3200, 2000);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minDistance = 500;
-controls.maxDistance = 30000;
+controls.minDistance = 300;
+controls.maxDistance = 25000;
 controls.update();
 
 // ============================================================
@@ -351,6 +351,32 @@ function updateHeatGlow(t4Kelvin, t5Kelvin) {
 }
 
 // ============================================================
+// COMPONENT-GROUPED SENSOR PANEL
+// ============================================================
+function buildSensorGroupPanel(sensors) {
+  if (!sensors) return;
+  const panel = document.getElementById('sensorGroups');
+  if (!panel) return;
+  const groups = { compressor: [], combustor: [], turbine: [] };
+  for (const [id, s] of Object.entries(sensors)) {
+    const stage = (s.stage || '').toLowerCase();
+    const entry = `<span style="color:#7a8cff">${s.label || id}</span> <span style="color:#8899bb">${s.value !== undefined ? s.value + ' ' + (s.unit || '') : '--'}</span>`;
+    if (stage.includes('comp')) groups.compressor.push(entry);
+    else if (stage.includes('comb') || stage.includes('burn')) groups.combustor.push(entry);
+    else if (stage.includes('turb')) groups.turbine.push(entry);
+    else groups.compressor.push(entry);  // fallback
+  }
+  let html = '<div style="color:#7a8cff;font-weight:600;font-size:11px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Sensors</div>';
+  for (const [stage, entries] of Object.entries(groups)) {
+    if (!entries.length) continue;
+    html += `<div style="color:#556688;font-size:10px;margin-top:4px;text-transform:uppercase">${stage}</div>`;
+    html += entries.map(e => `<div style="font-size:11px;padding:1px 0">${e}</div>`).join('');
+  }
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+// ============================================================
 // AIRFLOW STREAMLINES  — particles through the engine
 // ============================================================
 let streamParticles = null;
@@ -374,6 +400,7 @@ function buildStreamlines() {
   const curve = new THREE.CatmullRomCurve3(pts);
 
   const positions = new Float32Array(STREAM_COUNT * 3);
+  const colors = new Float32Array(STREAM_COUNT * 3);
 
   for (let i = 0; i < STREAM_COUNT; i++) {
     streamOffsets[i] = Math.random();
@@ -383,16 +410,23 @@ function buildStreamlines() {
     positions[i*3] = pt.x;
     positions[i*3+1] = pt.y;
     positions[i*3+2] = pt.z;
+    // Color gradient along path: blue(t=0) -> cyan -> green -> orange -> red(t=1)
+    const hue = 0.58 - t * 0.50;  // 0.58 (blue) -> 0.08 (orange-red)
+    const c = new THREE.Color().setHSL(Math.max(0, hue), 0.9, 0.45 + t * 0.15);
+    colors[i*3] = c.r;
+    colors[i*3+1] = c.g;
+    colors[i*3+2] = c.b;
   }
 
   const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const mat = new THREE.PointsMaterial({
-    color: 0x88ccff,
     size: 30,
     transparent: true,
-    opacity: 0.35,
+    opacity: 0.40,
+    vertexColors: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -409,14 +443,23 @@ function updateStreamlines(delta, rpmVal) {
   const speedScale = Math.max(0.2, rpmVal / 80000);
   const pos = streamParticlePositions.array;
 
+  const col = streamParticles.geometry.attributes.color;
   for (let i = 0; i < STREAM_COUNT; i++) {
     streamOffsets[i] = (streamOffsets[i] + streamSpeeds[i] * delta * speedScale) % 1.0;
-    const pt = curve.getPoint(streamOffsets[i]);
+    const t = streamOffsets[i];
+    const pt = curve.getPoint(t);
     pos[i*3] = pt.x;
     pos[i*3+1] = pt.y;
     pos[i*3+2] = pt.z;
+    // Update color as particle moves
+    const hue = 0.58 - t * 0.50;
+    const c = new THREE.Color().setHSL(Math.max(0, hue), 0.9, 0.45 + t * 0.15);
+    col.array[i*3] = c.r;
+    col.array[i*3+1] = c.g;
+    col.array[i*3+2] = c.b;
   }
   streamParticlePositions.needsUpdate = true;
+  col.needsUpdate = true;
 }
 
 // ============================================================
@@ -548,6 +591,8 @@ function buildScene(data) {
     };
     const base = pbrProps[name] || pbrProps.casing;
 
+    // Initial glow based on health
+    const initGlow = Math.max(0, 1 - stageHealth * 2);
     const material = new THREE.MeshPhysicalMaterial({
       vertexColors: true,
       color: base.color,
@@ -561,6 +606,8 @@ function buildScene(data) {
       clearcoat: base.clearcoat,
       clearcoatRoughness: base.clearcoatRoughness,
       clipShadows: true,
+      emissive: new THREE.Color(1, 0.3 * (1 - initGlow), 0.05 * (1 - initGlow)),
+      emissiveIntensity: initGlow * 1.5,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -587,6 +634,7 @@ function buildScene(data) {
   buildLegend();
   buildToolbar();
   buildSensors(data.sensors);
+  buildSensorGroupPanel(data.sensors);
   buildStreamlines();
 
   // Apply initial health
@@ -614,6 +662,10 @@ function updateHealth(health) {
     }
     mesh.geometry.attributes.color.needsUpdate = true;
     mesh.userData.health = hVal;
+    // Glow on low health: amber at 0.5, strong red glow at 0.0
+    const glow = Math.max(0, 1 - hVal * 2);
+    mesh.material.emissive = new THREE.Color(1, 0.3 * (1 - glow), 0.05 * (1 - glow));
+    mesh.material.emissiveIntensity = glow * 1.5;
   }
 }
 
@@ -704,6 +756,12 @@ function buildSensors(sensors) {
   sg.name = 'sensors';
   state.sensorGroup = sg;
 
+  // Component-grouped label panel (top-right area)
+  const groupPanel = document.createElement('div');
+  groupPanel.id = 'sensorGroups';
+  groupPanel.style.cssText = 'position:absolute;top:60px;right:16px;z-index:10;background:rgba(30,30,50,0.88);backdrop-filter:blur(8px);border-radius:8px;border:1px solid rgba(255,255,255,0.08);padding:10px 14px;font-size:11px;min-width:140px;display:none;pointer-events:none';
+  container.appendChild(groupPanel);
+
   for (const [id, s] of Object.entries(sensors)) {
     const pos = s.position || [0, 0, 0];
     const geom = new THREE.SphereGeometry(60, 16, 16);
@@ -720,15 +778,14 @@ function buildSensors(sensors) {
     sphere.userData.sensor = s;
     sg.add(sphere);
 
-    const labelText = s.value !== undefined
-      ? `${s.label || id}: ${s.value} ${s.unit || ''}`
-      : (s.label || id);
+    // Label hidden by default; shown only on hover
     const labelDiv = document.createElement('div');
-    labelDiv.textContent = labelText;
-    labelDiv.style.cssText = 'color:#7a8cff;font-size:10px;background:rgba(0,0,0,0.5);padding:2px 6px;border-radius:4px;pointer-events:none;white-space:nowrap';
+    labelDiv.textContent = s.label || id;
+    labelDiv.style.cssText = 'color:#7a8cff;font-size:10px;background:rgba(0,0,0,0.65);padding:2px 6px;border-radius:4px;pointer-events:none;white-space:nowrap;display:none';
     const label = new CSS2DObject(labelDiv);
     label.position.set(pos[0], pos[1] + 120, pos[2]);
     label.userData.sensorId = id;
+    label.userData.hoverLabel = labelDiv;
     sg.add(label);
 
     state.sensorMarkers.push(sphere);
@@ -835,11 +892,27 @@ renderer.domElement.addEventListener('mousemove', (event) => {
     }
   }
 
+  // Hide all sensor labels first
+  if (state.sensorGroup) {
+    state.sensorGroup.children.forEach(c => {
+      if (c.isCSS2DObject && c.userData.hoverLabel) c.userData.hoverLabel.style.display = 'none';
+    });
+  }
+
   if (!found && state.sensorMarkers.length && state.sensorGroup && state.sensorGroup.visible) {
     const sensorIntersects = raycaster.intersectObjects(state.sensorMarkers);
     if (sensorIntersects.length) {
       const s = sensorIntersects[0].object.userData.sensor;
+      const sid = sensorIntersects[0].object.userData.sensorId;
       if (s) {
+        // Show label for this sensor
+        state.sensorGroup.children.forEach(c => {
+          if (c.isCSS2DObject && c.userData.sensorId === sid && c.userData.hoverLabel) {
+            const valStr = s.value !== undefined ? ` ${s.value} ${s.unit || ''}` : '';
+            c.userData.hoverLabel.textContent = (s.label || sid) + valStr;
+            c.userData.hoverLabel.style.display = 'block';
+          }
+        });
         const val = s.value !== undefined ? s.value : '--';
         const range = s.valid_range ? `${s.valid_range[0]}-${s.valid_range[1]}` : '--';
         showTooltip(
@@ -1229,7 +1302,7 @@ function buildToolbar() {
   resetBtn.textContent = 'Reset';
   resetBtn.addEventListener('click', () => {
     controls.target.set(0, 0, 0);
-    camera.position.set(6000, -4000, 2500);
+    camera.position.set(5000, -3200, 2000);
     controls.update();
   });
   tb.appendChild(resetBtn);
@@ -1483,22 +1556,19 @@ function animate() {
     if (tm) tm.rotation.x -= speed * delta * 0.5;
   }
 
-  // Fault pulse
+  // Fault pulse — per-component, only affected stages
   faultPulse += delta * 2;
   const pulseVal = 0.5 + 0.5 * Math.sin(faultPulse);
 
-  for (const [stageName, faultInfo] of Object.entries(state.faults)) {
-    const mesh = state.stageMeshes[stageName];
-    if (!mesh) continue;
-    const severity = faultInfo.severity || 0;
-    const intensity = severity * pulseVal * 0.5;
-    mesh.material.emissive = new THREE.Color(1, 0.3, 0.1);
-    mesh.material.emissiveIntensity = intensity;
-  }
-
   for (const [name, mesh] of Object.entries(state.stageMeshes)) {
     if (!mesh || name === 'casing') continue;
-    if (!state.faults[name]) {
+    const fault = state.faults[name];
+    if (fault) {
+      const severity = fault.severity || 0;
+      const intensity = severity * pulseVal * 0.6;
+      mesh.material.emissive = new THREE.Color(1, 0.2, 0.05);
+      mesh.material.emissiveIntensity = intensity;
+    } else {
       mesh.material.emissive = new THREE.Color(0, 0, 0);
       mesh.material.emissiveIntensity = 0;
     }
