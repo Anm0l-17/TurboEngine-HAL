@@ -78,7 +78,13 @@ page = st.sidebar.radio(
     ],
 )
 
-health_pages = ["Overview", "Engine Health", "Degradation Analysis"]
+health_pages = [
+    "Overview",
+    "Engine Health",
+    "Degradation Analysis",
+    "What-If Simulator",
+    "Fault Injection",
+]
 view_mode = st.sidebar.radio(
     "Engine View", ["2D Schematic", "3D Engine"], disabled=page not in health_pages
 )
@@ -819,6 +825,21 @@ try:
             comparison = simulate_scenario(baseline_row, adjustment)
             st.session_state["scenario_comparison"] = comparison
             st.session_state["scenario_inputs"] = (baseline_row, adjustment)
+
+            if view_mode == "3D Engine":
+                st.subheader("3D Engine Scenario Reflection")
+                schematic_health = {
+                    "CompressorHealth": float(comparison["adjusted"]["compressor_health"]),
+                    "CombustorHealth": float(comparison["adjusted"]["combustor_health"]),
+                    "TurbineHealth": float(comparison["adjusted"]["turbine_health"]),
+                }
+                render_3d_engine(
+                    schematic_health,
+                    latest_input=latest_input,
+                    rpm=float(adjustment.rpm) if adjustment.rpm is not None else float(latest_input.get("RPM", 12000)),
+                    model_name=st.session_state.engine_model,
+                )
+
             before, after = st.columns(2)
             for label, snap, col in (
                 ("Before", comparison["baseline"], before),
@@ -861,6 +882,26 @@ try:
         faulted = twin_fault.batch_predict(
             data[data["EngineID"] == latest_engine_id].sort_values("Cycle")
         )
+
+        if view_mode == "3D Engine":
+            st.subheader("3D Engine Fault Reflection")
+            latest_faulted = faulted.iloc[-1]
+            schematic_health = {
+                "CompressorHealth": float(latest_faulted["CompressorHealth"]),
+                "CombustorHealth": float(latest_faulted["CombustorHealth"]),
+                "TurbineHealth": float(latest_faulted["TurbineHealth"]),
+            }
+            latest_faulted_input = data[data["EngineID"] == latest_engine_id].sort_values("Cycle").iloc[-1]
+            latest_faulted_engine_input = data[data["EngineID"] == latest_engine_id].sort_values("Cycle").reset_index(drop=True)
+            render_3d_engine(
+                schematic_health,
+                latest_input=latest_faulted_input,
+                engine_output=faulted,
+                engine_input_df=latest_faulted_engine_input,
+                rpm=float(latest_faulted_input.get("RPM", 12000)),
+                model_name=st.session_state.engine_model,
+            )
+
         st.dataframe(
             faulted[
                 [
