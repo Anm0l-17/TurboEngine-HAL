@@ -1,0 +1,164 @@
+# TurboEngine-HAL: Full System Reference for Language Models (LLMs)
+
+## 1. Executive Summary & Core Mission
+TurboEngine-HAL is a physics-informed digital twin for single-spool, four-stage turbojet engines (intake, compressor, combustor, turbine, nozzle). It bridges classical Brayton cycle thermodynamics with machine learning surrogates and Bayesian state estimation for health monitoring, prognostics, remaining useful life (RUL) estimation, and condition-based maintenance.
+
+Key capabilities:
+- Real-time surrogate inference: 0.06 ms/row, >10,000 predictions/s per CPU core.
+- Physically consistent: thermodynamic baseline guarantees physical plausibility; ML models learn residual degradation.
+- Bayesian tracking: Extended Kalman Filter (EKF) and Unscented Kalman Filter (UKF) track unobservable component health indicators over flight cycles.
+- Calibrated uncertainty: Conformal prediction engine guarantees 90% prediction intervals.
+- 3D Digital Twin visualization: Decimated CAD meshes (generic turbojet and KJ-66 micro-turbojet) dynamically colored by health degradation fields in PyVista/VTK.
+
+---
+
+## 2. Thermodynamic Physics Formulation
+
+### 2.1 Engine Station Numbering
+- Station 0: Ambient freestream atmosphere ($T_0, P_0, M$)
+- Station 1: Engine inlet face (after ram compression)
+- Station 2: Compressor inlet ($T_{t2}, P_{t2}$)
+- Station 3: Compressor exit / Combustor inlet ($T_{t3}, P_{t3}$)
+- Station 4: Combustor exit / Turbine inlet ($T_{t4}, P_{t4}$)
+- Station 5: Turbine exit / Nozzle inlet ($T_{t5}, P_{t5}$)
+- Station 8: Nozzle throat ($A_8$)
+- Station 9: Nozzle exit ($T_9, P_9, V_9$)
+
+### 2.2 Atmospheric & Inlet Conditions
+- Troposphere temperature ($h \le 11,000\text{ m}$): $T(h) = T_{SL} - L \cdot h$, with $T_{SL} = 288.15\text{ K}$, $L = 0.0065\text{ K/m}$.
+- Ambient pressure: $P(h) = P_{SL} \cdot (T(h)/T_{SL})^{(g M / R L)}$.
+- Total (stagnation) temperature: $T_{t0} = T_0 (1 + \frac{\gamma - 1}{2} M^2)$.
+- Total pressure: $P_{t0} = P_0 (1 + \frac{\gamma - 1}{2} M^2)^{\frac{\gamma}{\gamma - 1}}$.
+- Inlet total pressure recovery: $P_{t2} = \pi_d \cdot P_{t0}$ (where $\pi_d \approx 0.98$).
+
+### 2.3 Compressor Compression (Station 2 to 3)
+- Pressure ratio: $\pi_c = P_{t3} / P_{t2}$.
+- Isentropic exit temperature: $T_{t3,ideal} = T_{t2} \cdot \pi_c^{(\gamma_c - 1)/\gamma_c}$.
+- Actual exit temperature: $T_{t3} = T_{t2} \left[1 + \frac{\pi_c^{(\gamma_c - 1)/\gamma_c} - 1}{\eta_c}\right]$.
+- Compressor work: $W_c = \dot{m} \cdot c_{pc} \cdot (T_{t3} - T_{t2})$.
+
+### 2.4 Combustor Heat Addition (Station 3 to 4)
+- Energy balance: $\dot{m} c_{pc} T_{t3} + \dot{m}_f \eta_b LHV = (\dot{m} + \dot{m}_f) c_{pb} T_{t4}$.
+- Fuel-to-air ratio: $f = \dot{m}_f / \dot{m} = \frac{c_{pb} T_{t4} - c_{pc} T_{t3}}{\eta_b LHV - c_{pb} T_{t4}}$.
+- Combustor pressure drop: $P_{t4} = P_{t3} \cdot (1 - \Delta P_b)$.
+
+### 2.5 Turbine Expansion (Station 4 to 5)
+- Power balance constraint (shaft work): $W_t = W_c / \eta_{mech} \implies (\dot{m} + \dot{m}_f) c_{pt} (T_{t4} - T_{t5}) = \dot{m} c_{pc} (T_{t3} - T_{t2}) / \eta_m$.
+- Turbine temperature drop: $\Delta T_{t,turb} = \frac{c_{pc} (T_{t3} - T_{t2})}{\eta_m (1 + f) c_{pt}}$.
+- Turbine exit temperature: $T_{t5} = T_{t4} - \Delta T_{t,turb}$.
+- Turbine expansion ratio: $\pi_t = P_{t5} / P_{t4} = \left[1 - \frac{1 - T_{t5}/T_{t4}}{\eta_t}\right]^{\frac{\gamma_t}{\gamma_t - 1}}$.
+
+### 2.6 Exhaust Nozzle & Thrust (Station 5 to 9)
+- Critical pressure ratio for sonic nozzle throat: $P_{crit} = P_{t5} \left(\frac{2}{\gamma + 1}\right)^{\frac{\gamma}{\gamma - 1}}$.
+- Exit velocity: $V_9 = \sqrt{2 c_{pn} T_{t5} \left[1 - (P_0 / P_{t5})^{(\gamma_n - 1)/\gamma_n}\right]}$.
+- Uninstalled net thrust: $F_{net} = (\dot{m} + \dot{m}_f) V_9 - \dot{m} V_0 + (P_9 - P_0) A_9$.
+- Thrust Specific Fuel Consumption: $\text{TSFC} = \frac{\dot{m}_f}{F_{net}}$.
+
+---
+
+## 3. Machine Learning & Residual Hybrid Architecture
+
+### 3.1 Residual Learning Formulation
+Standard ML models predict targets directly from sensor inputs: $\hat{y} = f_{ML}(x)$.
+TurboEngine-HAL decouples this:
+$$y = y_{physics}(x) + \Delta y_{degradation}$$
+$$\hat{y} = f_{physics}(x) + f_{ML}(x, y_{physics}(x))$$
+1. $f_{physics}(x)$ computes the ideal, nominal thermodynamic operating point.
+2. $f_{ML}$ models strictly the non-linear degradation residual $\Delta y$, preventing non-physical predictions and ensuring robust extrapolation outside training envelopes.
+
+### 3.2 Supported Surrogate Models
+- `ExtraTreesRegressor`: Default production model; low variance, 0.06 ms latency, fast parallel inference.
+- `HistGradientBoostingRegressor`: Fast gradient boosted trees with native NaN handling.
+- `RandomForestRegressor`: Classical bagged trees.
+- `StackingRegressor`: Multi-model ensemble with Ridge meta-learner combining tree ensembles.
+- `MLPRegressor`: Neural network baseline.
+
+---
+
+## 4. Bayesian State Estimation & Prognostics
+
+### 4.1 Extended Kalman Filter (EKF)
+State vector: $x_k = [h_k, \dot{h}_k]^T$, where $h_k \in [0, 1]$ is the continuous engine health index, and $\dot{h}_k$ is the cycle-over-cycle degradation rate.
+- State Transition:
+  $$x_k = F x_{k-1} + w_{k-1}, \quad F = \begin{bmatrix} 1 & -\Delta t \\ 0 & 1 \end{bmatrix}, \quad w \sim \mathcal{N}(0, Q)$$
+- Observation Model:
+  $$z_k = h(x_k) + v_k, \quad v \sim \mathcal{N}(0, R)$$
+- Innovation & Update:
+  $$\tilde{y}_k = z_k - H \hat{x}_{k|k-1}$$
+  $$S_k = H P_{k|k-1} H^T + R$$
+  $$K_k = P_{k|k-1} H^T S_k^{-1}$$
+  $$\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k$$
+
+### 4.2 Remaining Useful Life (RUL) Calculation
+Given estimated health $\hat{h}_k$, degradation velocity $\hat{\dot{h}}_k$, and failure threshold $h_{fail} \approx 0.60$:
+$$\text{RUL} = \frac{\hat{h}_k - h_{fail}}{\max(\hat{\dot{h}}_k, \epsilon)}$$
+Failure probability curves are integrated over future flight horizons using the Gaussian error function $\Phi$.
+
+### 4.3 Conformal Prediction
+Split conformal prediction provides valid finite-sample prediction intervals $[ \hat{y} - q_{1-\alpha}, \hat{y} + q_{1-\alpha} ]$ where $q_{1-\alpha}$ is the $(1-\alpha)(1 + 1/n)$-quantile of calibration non-conformity scores, guaranteeing $P(Y \in C(X)) \ge 1 - \alpha$ without distributional assumptions.
+
+---
+
+## 5. System Directory Structure
+```
+TurboEngine-HAL/
+├── .agents/
+│   └── AGENTS.md                  # Development environment rules
+├── .github/
+│   └── copilot-instructions.md    # Instructions for GitHub Copilot
+├── CLAUDE.md                      # Instructions for Claude Code / Anthropic
+├── .cursorrules                   # Rules for Cursor IDE
+├── robots.txt                     # Crawler directives for AI bots
+├── llms.txt                       # Standard LLM index file
+├── llms-full.txt                  # Full consolidated context (this file)
+├── configs/                       # Configuration YAML files
+│   ├── engine.yaml                # Engine physical dimensions and cycle limits
+│   └── surrogate.yaml             # Model hyperparameters
+├── data/                          # Dataset generation and storage
+├── docs/                          # Comprehensive technical documentation
+│   ├── ARCHITECTURE.md            # Software architecture
+│   ├── DATA.md                    # Data schema and feature engineering
+│   ├── Equations.md               # Pure mathematical reference
+│   ├── PROJECT_GUIDE.md           # Exhaustive engineering guide
+│   ├── Theory.md                  # Thermodynamic and state estimation theory
+│   ├── Validation.md              # Benchmarks and comparisons
+│   └── physics_cross_check.md     # Mattingly textbook comparison
+├── models/                        # Serialized models and CAD meshes
+├── research/                      # Academic research paper draft & posters
+├── scripts/
+│   └── convert_engine_cad.py      # STEP to VTP decimation & preprocessing
+├── src/
+│   ├── api/                       # FastAPI REST service
+│   ├── dashboard/                 # Streamlit interactive application
+│   ├── data/                      # Data generator & feature pipelines
+│   ├── estimators/                # EKF and UKF Bayesian state estimators
+│   ├── models/                    # ML surrogates and hybrid architectures
+│   ├── physics/                   # Thermodynamic engine models
+│   ├── prognostics/               # RUL & failure probability engines
+│   ├── uncertainty/               # Conformal prediction interval engine
+│   └── viz3d/                     # PyVista / VTK CAD mesh rendering
+├── tests/                         # Full pytest test suite
+└── pipeline.py                    # Top-level CLI entry point
+```
+
+---
+
+## 6. REST API Specification (`src/api/`)
+Base URL: `http://localhost:8000`
+
+Endpoints:
+1. `GET /health`: Service health status.
+2. `POST /predict/surrogate`: Evaluates ML surrogate given sensor inputs (Alt, Mach, RPM, Fuel Flow, P2-T4).
+3. `POST /predict/physics`: Computes Brayton cycle thermodynamic states.
+4. `POST /predict/hybrid`: Evaluates hybrid physics-ML residual model.
+5. `POST /estimate/state`: Runs Bayesian Kalman Filter for a cycle sequence.
+6. `POST /prognostics/rul`: Computes RUL and failure probability curve.
+7. `POST /uncertainty/conformal`: Returns 90% conformal prediction bounds.
+8. `GET /fleet/rankings`: Returns health ranking and prioritized maintenance schedule.
+
+---
+
+## 7. How Any LLM Can Query or Ingest This Repository
+1. **Direct Web Ingestion**: Visit `https://gitingest.com/Anm0l-17/TurboEngine-HAL` to extract all source code and docs into a single prompt.
+2. **Context Window Prompt**: Paste `llms.txt` or `llms-full.txt` directly into ChatGPT, Claude, Gemini, DeepSeek, or open-source models.
+3. **Agent Integration**: Run directly with Claude Code, Cursor, Copilot, or Antigravity agents using the local repository clone.

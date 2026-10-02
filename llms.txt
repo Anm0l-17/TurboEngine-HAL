@@ -1,0 +1,62 @@
+# TurboEngine-HAL
+
+> Physics-informed digital twin for four-stage turbojet engine health monitoring, remaining useful life (RUL) prognostics, condition-based maintenance, and interactive 3D CAD visualization.
+
+## Overview & Capabilities
+
+TurboEngine-HAL integrates thermodynamic cycle physics (Brayton cycle with variable $c_p(T)$ and ISA atmospheric lapse rates) with machine learning surrogates (ExtraTrees, HistGradientBoosting, Stacking) in a hybrid residual-learning framework. An Extended/Unscented Kalman Filter tracks degradation states over engine flight cycles, while Conformal Prediction provides mathematically guaranteed 90% uncertainty intervals. Results are served via an 8-endpoint FastAPI service and an 18-page interactive Streamlit dashboard with 3D CAD mesh rendering.
+
+## 1-Click LLM Codebase Ingestion
+
+Any LLM (Claude, ChatGPT, Gemini, DeepSeek, Cursor, Copilot) can ingest and analyze this repository via:
+- **GitIngest (Full Digest)**: [https://gitingest.com/Anm0l-17/TurboEngine-HAL](https://gitingest.com/Anm0l-17/TurboEngine-HAL) — converts the entire codebase into a single clean text prompt.
+- **Consolidated Context**: [llms-full.txt](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/llms-full.txt) — comprehensive consolidated context file for LLMs.
+- **Repository URL**: [https://github.com/Anm0l-17/TurboEngine-HAL](https://github.com/Anm0l-17/TurboEngine-HAL) (Public repository).
+
+## Core Documentation
+
+- [README.md](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/README.md): High-level system overview, quickstart, CLI, and API reference.
+- [Complete Project Guide](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/docs/PROJECT_GUIDE.md): Exhaustive engineering guide explaining the physics formulas in plain English, architecture, Kalman filtering, conformal prediction, and CAD rendering.
+- [Thermodynamic Theory](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/docs/Theory.md): Brayton cycle thermodynamic theory, component performance maps, and degradation models.
+- [Mathematical Formulation](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/docs/Equations.md): Complete mathematical formulas for station pressures, temperatures, efficiencies, and state estimation.
+- [System Architecture](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/docs/ARCHITECTURE.md): Class hierarchy, pipeline stages, data flow, and design patterns.
+- [Physics Validation Cross-Check](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/docs/physics_cross_check.md): Validation and cross-checks against Jack D. Mattingly's aircraft engine design standards.
+- [Engineering Problem Analysis](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/turbojet_problems_analysis.md): 8 deep engineering challenges, degradation modes, and digital twin solutions.
+- [Validation & Benchmarks](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/docs/Validation.md): Benchmarks, RUL error comparisons, and NASA C-MAPSS validation.
+
+## Key Source Code Modules (`src/`)
+
+- [src/physics/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/physics): Thermodynamic Brayton cycle engine (`thermo.py`), ISA atmospheric model (`atmosphere.py`), component maps (`components.py`), and compressor/turbine physics.
+- [src/models/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/models): ML surrogate models (`surrogate.py`), hybrid residual model (`hybrid.py`), stacking ensemble (`stacking.py`), and baseline physics comparisons.
+- [src/estimators/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/estimators): Extended Kalman Filter (`ekf.py`) and Unscented Kalman Filter (`ukf.py`) for health and degradation rate estimation.
+- [src/prognostics/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/prognostics): Remaining Useful Life (RUL) estimation (`rul.py`), failure probability curves, and maintenance threshold logic.
+- [src/uncertainty/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/uncertainty): Split conformal prediction engine (`conformal.py`) providing calibrated 90% prediction intervals.
+- [src/data/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/data): Synthetic sensor dataset generator (`generator.py`), feature engineering pipeline (`features.py`), and C-MAPSS dataset loader (`cmapss.py`).
+- [src/api/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/api): Production FastAPI service (`app.py`, `schemas.py`) exposing 8 REST endpoints for real-time inference and telemetry ingestion.
+- [src/dashboard/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/dashboard): 18-page Streamlit application (`app.py`, `components/`) featuring fleet rankings, what-if simulators, and 3D CAD visualization.
+- [src/viz3d/](https://github.com/Anm0l-17/TurboEngine-HAL/tree/main/src/viz3d): PyVista and VTK 3D engine CAD mesh decimation, scalar field coloring, and interactive HTML rendering.
+
+## Quick CLI Reference
+
+```bash
+# Run full synthetic pipeline (data generation -> feature engineering -> training -> evaluation)
+python pipeline.py run-all
+
+# Download and benchmark against NASA C-MAPSS dataset
+python pipeline.py cmapss
+
+# Launch FastAPI REST service (default port 8000)
+python pipeline.py serve-api --host 0.0.0.0 --port 8000
+
+# Launch interactive Streamlit 3D Dashboard (default port 8501)
+python pipeline.py serve-dashboard --port 8501
+
+# Execute comprehensive test suite
+pytest tests/ -v
+```
+
+## Environment & Dependencies
+
+- **Python Version**: `>=3.10`
+- **Installation**: `pip install -e ".[all]"` (or `pip install -e ".[dev,api,dashboard,reports,ml,viz3d]"`)
+- **Note on 3D Dashboard**: Always ensure `pyvista` is installed as the dashboard imports `pyvista` at startup.

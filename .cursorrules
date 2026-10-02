@@ -1,0 +1,15 @@
+# TurboEngine-HAL Cursor Rules & AI Assistant Directives
+
+You are working on TurboEngine-HAL, an aerospace digital twin codebase.
+
+### Project Conventions & Stack
+- Language: Python 3.10+
+- Scientific/ML Stack: NumPy, SciPy, Pandas, Scikit-learn, XGBoost, PyVista, VTK, FastAPI, Streamlit, Pydantic v2.
+- Architecture: Hybrid Residual Learning (Physics baseline + ML residual + Bayesian Kalman Filter).
+
+### Key Constraints
+1. Always maintain physical units: Temperatures in Kelvin ($K$), Pressures in kiloPascals ($kPa$), Mass flows in $kg/s$, Velocities in $m/s$, Thrust in Newtons ($N$).
+2. Never remove existing docstrings or mathematical derivations.
+3. For Streamlit dashboard development, ensure `pyvista` is installed and handle headless rendering appropriately (`pyvista.start_xvfb()` if running on Linux without display).
+4. Keep all state estimation logic numerically stable (symmetrical covariance matrices $P = \frac{1}{2}(P + P^T)$, Joseph form updates where applicable).
+5. Fast test runs: `pytest tests/ -q`.

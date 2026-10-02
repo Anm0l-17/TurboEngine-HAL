@@ -2,17 +2,40 @@
 
 Physics-informed digital twin for four-stage turbojet health monitoring, RUL prediction, condition-based maintenance, and **interactive 3D engine visualization**.
 
-**Documentation Series**
+**Documentation & AI / LLM Ingestion**
 
-| # | Chapter | Description |
-|---|---------|-------------|
-| 1 | **README** (this page) | Project overview, quick start, CLI & API reference |
-| 2 | [Theory](docs/Theory.md) | Thermodynamics, state estimation, surrogate modelling, prognostics |
-| 3 | [Equations](docs/Equations.md) | Full mathematical formulation with all equations |
-| 4 | [Architecture](docs/ARCHITECTURE.md) | Module dependencies, data flow, design decisions |
-| 5 | [Dataset](docs/DATA.md) | Schema, feature engineering, split strategies |
-| 6 | [Validation](docs/Validation.md) | Model comparison tables, per-target metrics, benchmarks |
-| — | [Research](../research/) | Bibliography, ablation studies, figures, experiments |
+| Resource | Link | Description |
+|---|---|---|
+| **🤖 Ingest Codebase into any LLM** | [![GitIngest](https://img.shields.io/badge/GitIngest-Ingest%20Repo-blue?style=flat&logo=github)](https://gitingest.com/Anm0l-17/TurboEngine-HAL) | 1-Click ingest for Claude, ChatGPT, Gemini, DeepSeek, Cursor |
+| **📄 Standard LLM Index** | [`llms.txt`](llms.txt) | Machine-readable index for LLMs and AI agents ([llmstxt.org](https://llmstxt.org)) |
+| **📑 Consolidated Context** | [`llms-full.txt`](llms-full.txt) | Full consolidated mathematical & system reference for prompt windows |
+| 1. **README** (this page) | [README.md](README.md) | Project overview, quick start, CLI & API reference |
+| 2. **Complete Project Guide** | [PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md) | Physics formulas in plain English, architecture, and step-by-step guide |
+| 3. [Theory](docs/Theory.md) | [Theory.md](docs/Theory.md) | Thermodynamics, state estimation, surrogate modelling, prognostics |
+| 4. [Equations](docs/Equations.md) | [Equations.md](docs/Equations.md) | Full mathematical formulation with all equations |
+| 5. [Architecture](docs/ARCHITECTURE.md) | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Module dependencies, data flow, design decisions |
+| 6. [Dataset](docs/DATA.md) | [DATA.md](docs/DATA.md) | Schema, feature engineering, split strategies |
+| 7. [Validation](docs/Validation.md) | [Validation.md](docs/Validation.md) | Model comparison tables, per-target metrics, benchmarks |
+| 8. [Mattingly Cross-Check](docs/physics_cross_check.md) | [physics_cross_check.md](docs/physics_cross_check.md) | Aerothermodynamic cycle validation against Mattingly equations |
+| 9. [Engineering Analysis](turbojet_problems_analysis.md) | [turbojet_problems_analysis.md](turbojet_problems_analysis.md) | 8 deep engineering challenges and failure modes addressed |
+| — | [Research](research/) | Bibliography, ablation studies, figures, experiments |
+
+---
+
+### How Any LLM Can Access This Repository
+
+1. **Direct Web Ingestion (1-Click)**:
+   Any user or LLM can ingest this entire repository by visiting or passing the following URL into any LLM web browser / fetch tool:
+   ```
+   https://gitingest.com/Anm0l-17/TurboEngine-HAL
+   ```
+2. **Context Window / API Prompting**:
+   Download or fetch [`llms-full.txt`](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/llms-full.txt) or [`llms.txt`](https://raw.githubusercontent.com/Anm0l-17/TurboEngine-HAL/main/llms.txt) for an instant, comprehensive briefing on the physics, architecture, API, and schemas.
+3. **AI IDEs & CLI Agents**:
+   - Anthropic Claude / Claude Code: configured via [`CLAUDE.md`](CLAUDE.md)
+   - Cursor IDE: configured via [`.cursorrules`](.cursorrules)
+   - GitHub Copilot: configured via [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
+   - Web Crawlers & AI Agents: explicitly permitted in [`robots.txt`](robots.txt)
 
 ---
 
